@@ -14,7 +14,7 @@
     :builds [{:id "webinar"
               :source-paths ["src"]
               :compiler {
-                :output-to "webinar.js"
-                :output-dir "out"
+                :output-to "js/webinar.js"
+                :output-dir "js/out"
                 :optimizations :none
                 :source-map true}}]})
