@@ -3,6 +3,10 @@
   (:require [cljs.core.async :as async
              :refer [>! <! put! chan alts!]]
             [goog.events :as events]
+            [reagent.core :as reagent]
+            [webinar.components.example1 :as example1]
+            [webinar.components.example6 :as example6]
+            [webinar.components.example8 :as example8]
             [goog.dom.classes :as classes])
   (:import [goog.events EventType]))
 
@@ -40,156 +44,6 @@
         p  (.createElement js/document "p")]
     (set! (.-innerHTML p) msg)
     (.appendChild el p)))
-
-;; =============================================================================
-;; Example 1
-
-(defn ex1 []
-  (let [clicks (events->chan (by-id "ex1-button") EventType.CLICK)
-        show!  (partial show! "ex1-messages")]
-    (go
-      (show! "Waiting for a click ...")
-      (<! clicks)
-      (show! "Got a click!"))))
-
-(ex1)
-
-;; =============================================================================
-;; Example 2
-
-(defn ex2 []
-  (let [clicks (events->chan (by-id "ex2-button") EventType.CLICK)
-        show!  (partial show! "ex2-messages")]
-    (go
-      (show! "Waiting for a click ...")
-      (<! clicks)
-      (show! "Got a click!")
-      (show! "Waiting for another click ...")
-      (<! clicks)
-      (show! "Done!"))))
-
-(ex2)
-
-;; =============================================================================
-;; Example 3
-
-(defn ex3 []
-  (let [clicks-a (events->chan (by-id "ex3-button-a") EventType.CLICK)
-        clicks-b (events->chan (by-id "ex3-button-b") EventType.CLICK)
-        show!    (partial show! "ex3-messages")]
-    (go
-      (show! "Waiting for a click from Button A ...")
-      (<! clicks-a)
-      (show! "Got a click!")
-      (show! "Waiting for a click from Button B ...")
-      (<! clicks-b)
-      (show! "Done!"))))
-
-(ex3)
-
-;; =============================================================================
-;; Example 4
-
-(defn ex4 []
-  (let [clicks (events->chan (by-id "ex4-button-a") EventType.CLICK)
-        c0     (chan)
-        show!  (partial show! "ex4-messages")]
-    (go
-      (show! "Waiting for click.")
-      (<! clicks)
-      (show! "Putting a value on channel c0, cannot proceed until someone takes")
-      (>! c0 (js/Date.))
-      (show! "We'll never get this far!")
-      (<! c0))))
-
-(ex4)
-
-;; =============================================================================
-;; Example 5
-
-(defn ex5 []
-  (let [clicks (events->chan (by-id "ex5-button") EventType.CLICK)
-        c0     (chan)
-        show!  (partial show! "ex5-messages")]
-    (go
-      (show! "Waiting for click.")
-      (<! clicks)
-      (show! "Putting a value on channel c0, cannot proceed until someone takes")
-      (>! c0 (js/Date.))
-      (show! "Someone took the value from c0!"))
-    (go
-      (let [v (<! c0)]
-        (show! (str "We got a value from c0: " v))))))
-
-(ex5)
-
-;; =============================================================================
-;; Example 6
-
-(defn ex6 []
-  (let [button (by-id "ex6-button")
-        clicks (events->chan button EventType.CLICK)
-        mouse  (events->chan js/window EventType.MOUSEMOVE
-                 (chan 1 (map mouse-loc->vec)))
-        show!  (partial show! "ex6-messages")]
-    (go
-      (show! "Click button to start tracking the mouse!")
-      (<! clicks)
-      (set! (.-innerHTML button) "Stop!")
-      (loop []
-        (let [[v c] (alts! [mouse clicks])]
-          (cond
-            (= c clicks) (show! "Done!")
-            :else
-            (do
-              (show! (pr-str v))
-              (recur))))))))
-
-(ex6)
-
-;; =============================================================================
-;; Example 7
-
-(defn ex7 []
-  (let [button (by-id "ex7-button")
-        clicks (events->chan button EventType.CLICK)
-        mouse  (events->chan js/window EventType.MOUSEMOVE
-                 (chan 1 (comp (map mouse-loc->vec)
-                               (filter (fn [[_ y]] (zero? (mod y 5)))))))
-        show!  (partial show! "ex7-messages")]
-    (go
-      (show! "Click button to start tracking the mouse!")
-      (<! clicks)
-      (set! (.-innerHTML button) "Stop!")
-      (loop []
-        (let [[v c] (alts! [mouse clicks])]
-          (cond
-            (= c clicks) (show! "Done!")
-            :else
-            (do
-              (show! (pr-str v))
-              (recur))))))))
-
-(ex7)
-
-;; =============================================================================
-;; Example 8
-
-(defn ex8 []
-  (let [clicks (events->chan (by-id "ex8-button") EventType.CLICK)
-        show!  (partial show! "ex8-messages")]
-    (go
-      (show! "Click the button ten times!")
-      (<! clicks)
-      (loop [i 1]
-        (show! (str i " clicks!"))
-        (if (> i 9)
-          (show! "Done!")
-          (do
-            (<! clicks)
-            (recur (inc i))))))))
-
-(ex8)
 
 ;; =============================================================================
 ;; Example 9
@@ -300,3 +154,14 @@
 
 (ex10 [:aardvark :beetle :cat :dog :elk :ferret
        :goose :hippo :ibis :jellyfish :kangaroo])
+
+(defn reagent-examples []
+  [:div
+   [example1/component]
+   [example6/component]
+   [example8/component]])
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn ^:export run []
+  (reagent/render [reagent-examples]
+                  (by-id "reagent")))
